@@ -94,7 +94,6 @@ def test_server_comm():
 def test_receive():
     stm32_reset(0.25)
     robot = VisionRobot()
-    robot.init()
     robot.start()
     robot.setSpeed([0.0, 0.0])
 

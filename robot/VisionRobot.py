@@ -1,7 +1,6 @@
 import ctypes
 import threading
 import time
-import robot.navigation.agent as agent
 #import robot.VisionRobot.aruco_detection.aruco_detector as arcd
 
 from board.board import RobotControl_Board
@@ -53,7 +52,6 @@ class VisionRobot:
     board: RobotControl_Board
     communication: TWIPR_Communication
     _thread: threading.Thread
-    agent: agent.Agent
     data: CommunicationData
 
     def __init__(self, camera_version="v3", image_server_ip="localhost"):
@@ -67,7 +65,6 @@ class VisionRobot:
                                         device_name='Vision Robot 1')
 
         self.communication = TWIPR_Communication(board=self.board)
-        self.agent = agent.Agent(self)
         self.communication.serial.interface.registerCallback('rx_stream', self._rx_callback)
 
         self.communication.wifi.addCommand(identifier='setSpeed',
@@ -89,10 +86,10 @@ class VisionRobot:
 
         self.data = CommunicationData()
 
-    # === METHODS ======================================================================================================
-    def init(self):
         self.board.init()
         self.communication.init()
+
+    # === METHODS ======================================================================================================
 
     # ------------------------------------------------------------------------------------------------------------------
     def start(self):
@@ -100,7 +97,6 @@ class VisionRobot:
         self.board.start()
         self.communication.start()
         self._thread.start()
-        #self.agent.start()
         print("START VISION ROBOT ...")
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -125,13 +121,10 @@ class VisionRobot:
                                                   data=input_struct,
                                                   input_type=motor_input_struct)
 
-    def turn(self, phi):
-        print(f"Turn by {phi}")
-        cphi = ctypes.c_float(phi)
-        self.communication.serial.executeFunction(module=0x01, address=0x03, data=cphi, input_type=ctypes.c_float)
-
-    def goTo(self, x, y):
-        self.agent.addGoal(x, y)
+#    def turn(self, phi):
+#        print(f"Turn by {phi}")
+#        cphi = ctypes.c_float(phi)
+#        self.communication.serial.executeFunction(module=0x01, address=0x03, data=cphi, input_type=ctypes.c_float)
 
     # === PRIVATE METHODS ==============================================================================================
     ''' Send Stream to Hardware Manager '''

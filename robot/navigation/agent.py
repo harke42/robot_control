@@ -5,11 +5,24 @@ import numpy as np
 
 from robot import VisionRobot
 
+SPEED_AT_1 = 206
+
+INSTRUCTION_SET = ["goals", "movements"]
+USE_GOALS = 0
+USE_MOVEMENTS = 1
+
+X = 0
+Y = 1
+
 class Agent:
 
+    movements: list # movement structure: []
     goal_position: list
-    position: list # [x, y]
-    direction: float # 0 < direction < 2*pi
+
+    instruction_set: int
+
+    position: list # [x, y] in mm
+    phi: float # direction; -pi < phi < pi
 
     robot: VisionRobot
 
@@ -17,22 +30,33 @@ class Agent:
     k_phi: int      #proportional phi coefficient
     k_v: int        #proportional v coefficient
 
-    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, robot=None):
+    update_thread: threading.Thread
+
+    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=0, robot=None):
         self.position = start_pos
         self.goal_position = [0.0, 0.0]
+        self.movements = []
+        self.instruction_set = instruction_set
         self.direction = start_dir
         self.robot = robot
 
-    def update_position(self, delta_time, velocity_l, velocity_r):
-        # calculate current position
+    def start(self):
+        self.robot.start()
+
+    def add_movement(self, time=-1, dphi=0, radius=-1):
+        if dphi == 0 and radius == -1:
+            self.robot.setSpeed([1.0, 1.0])
+            time.sleep(time)
+            self.position[X] += np.sin(self.phi) * time * SPEED_AT_1
+            self.position[Y] += np.cos(self.phi) * time * SPEED_AT_1
+        elif dphi == 0 and time == -1:
+            dtime = radius/206
+            self.robot.setSpeed([1.0, 1.0])
         
 
-        # calculate next movement
-        error_phi = np.arctan2(self.goal_position[1]-self.position[1],
-                               self.goal_position[0]-self.position[0])
-
-        error_v = np.sqrt((self.goal_position[1]-self.position[1])**2 + (self.goal_position[0]-self.position[0])**2)
-
+    def _update_position(self):
+        ...
+        
 """
 SAMPLE_TIME = 0.01
 
