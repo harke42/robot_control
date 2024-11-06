@@ -18,12 +18,13 @@ import time
 
 from extensions.joystick import rpi_joystick
 from utils.stm32.stm32_flash.reset import reset as stm32_reset
-from robot.VisionRobot import VisionRobot
+import robot.visionrobot as vsrob
+import navigation.agent as nav
 
 
 def test_comm():
     # stm32_reset(0.25)
-    robot = VisionRobot()
+    robot = vsrob.VisionRobot()
     robot.init()
     robot.start()
 
@@ -37,7 +38,7 @@ def test_comm():
 
 
 def test_board():
-    robot = VisionRobot()
+    robot = vsrob.VisionRobot()
     robot.init()
     robot.start()
 
@@ -52,7 +53,7 @@ def test_board():
 
 def test_speed_control():
     stm32_reset(0.25)
-    robot = VisionRobot()
+    robot = vsrob.VisionRobot()
     robot.init()
     robot.start()
     time.sleep(2)
@@ -83,7 +84,7 @@ def test_speed_control():
 
 def test_server_comm():
     stm32_reset(0.25)
-    robot = VisionRobot()
+    robot = vsrob.VisionRobot()
     robot.init()
     robot.start()
 
@@ -92,13 +93,24 @@ def test_server_comm():
 
 
 def test_receive():
-    stm32_reset(0.25)
-    robot = VisionRobot()
+    robot = vsrob.VisionRobot()
     robot.start()
     robot.setSpeed([0.0, 0.0])
 
     while True:
         time.sleep(1)
+
+def test_agent():
+    stm32_reset(0.25)
+    agent = nav.Agent()
+    agent.start()
+    while True:
+        mov_in = input("time dphi radius:\n")
+        mov_in = mov_in.split(sep=" ")
+        vtime = float(mov_in[0])
+        dphi = float(mov_in[1])
+        radius = float(mov_in[2])
+        agent.add_movement(vtime=vtime, dphi=dphi, radius=radius)
 
 
 if __name__ == '__main__':
@@ -106,4 +118,5 @@ if __name__ == '__main__':
     # print("HALLO")
     #test_speed_control()
     #test_server_comm()
-    test_receive()
+    #test_receive()
+    test_agent()

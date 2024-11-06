@@ -3,8 +3,7 @@ import threading
 import time
 import numpy as np
 
-from robot import VisionRobot
-
+import robot.visionrobot as vsrob
 VELOCITY_AT_1 = 206
 
 INSTRUCTION_SET = ["goals", "movements"]
@@ -26,7 +25,7 @@ class Agent:
     position: list # [x, y] in [mm]
     phi: float # direction in [rad]; -pi < phi < pi
 
-    robot: VisionRobot
+    robot: vsrob.VisionRobot
 
     #controller parameters
     k_phi: int      #proportional phi coefficient
@@ -34,13 +33,14 @@ class Agent:
 
     update_thread: threading.Thread
 
-    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=0, robot=None):
+    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=1, robot=None):
         self.position = start_pos
         self.goal_position = [0.0, 0.0]
+        self.phi = start_dir
         self.movements = []
         self.instruction_set = instruction_set
         self.direction = start_dir
-        self.robot = robot
+        self.robot = vsrob.VisionRobot()
         if instruction_set == USE_MOVEMENTS:
             self.update_thread = threading.Thread(target=self._movement_task)
 
@@ -48,15 +48,18 @@ class Agent:
         self.robot.start()
         self.update_thread.start()
 
-    def add_movement(self, time=-1, dphi=-1, radius=-1):
-        self.movements.append([time, dphi, radius])
+    def add_movement(self, vtime=-1, dphi=-1, radius=-1):
+        if self.instruction_set != USE_MOVEMENTS:
+            print("Tried to add movement while in GOAL mode")
+            return
+        self.movements.append([vtime, dphi, radius])
 
     def _movement_task(self):
         while True:
             try:
                 if len(self.movements) > 0:
                     movement = self.movements.pop(0)
-                    self._calculate_movement(time=movement[0], dphi=movement[1], radius=movement[2])
+                    self._calculate_movement(vtime=movement[0], dphi=movement[1], radius=movement[2])
 
             except Exception as e:
                 print("Error in Movement Task!")
@@ -85,12 +88,9 @@ class Agent:
         return v_l, v_r
 
 
-    def _calculate_movement(self, time=-1, dphi=-1, radius=-1):
+    def _calculate_movement(self, vtime=-1, dphi=-1, radius=-1):
         """ time in [s], dphi in [rad], radius in [mm] """
 
-        if INSTRUCTION_SET != USE_MOVEMENTS:
-            print("Tried to add movement while in GOAL mode")
-            return
         v_l = 0
         v_r = 0
         
@@ -98,28 +98,28 @@ class Agent:
             v_l = 1.0
             v_r = 1.0
 
-        elif dphi == 0 and time == -1:
-            time = radius/206
+        elif dphi == 0 and vtime == -1:
+            vtime = radius/206
             v_l = 1.0
             v_r = 1.0
 
-        elif time == -1 and radius != -1:
+        elif vtime == -1 and radius != -1:
             v_l, v_r = self._vr_vl_from_radius(radius)
-            time = (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
+            vtime = (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
         
         elif dphi == -1 and radius != -1:
             v_l, v_r = self._vr_vl_from_radius(radius)
-            dphi = (v_r - v_l)*time * 1/DIST_BETWEEN_MOTORS
+            dphi = (v_r - v_l)*vtime * 1/DIST_BETWEEN_MOTORS
             
         else:
             print("Uncompleted movement command, skipping!")
-            print("Input: time"+str(time)+" dphi=" + str(dphi) + " radius=" + str(radius))
+            print("Input: time"+str(vtime)+" dphi=" + str(dphi) + " radius=" + str(radius))
             return
         
         s_l = self._speed_to_motor_input(v_l)
         s_r = self._speed_to_motor_input(v_r)
         self.robot.setSpeed([s_l, s_r])
-        time.sleep(time)
+        time.sleep(vtime)
         self._update_position(dphi, v_l, v_r)
 
     def _update_position(self, dphi, v_l, v_r):

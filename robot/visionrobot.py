@@ -72,16 +72,6 @@ class VisionRobot:
                                            arguments=['speed'],
                                            description='Set the speed of the motors')
 
-        self.communication.wifi.addCommand(identifier='turn',
-                                           callback=self.turn,
-                                           arguments=['phi'],
-                                           description='Turn robot by phi [rad]')
-
-        self.communication.wifi.addCommand(identifier='goTo',
-                                           callback=self.goTo,
-                                           arguments=['x', 'y'],
-                                           description='Go to specified x,y position in local coordinate system')
-
         self._thread = threading.Thread(target=self._threadFunction)
 
         self.data = CommunicationData()
@@ -121,10 +111,6 @@ class VisionRobot:
                                                   data=input_struct,
                                                   input_type=motor_input_struct)
 
-#    def turn(self, phi):
-#        print(f"Turn by {phi}")
-#        cphi = ctypes.c_float(phi)
-#        self.communication.serial.executeFunction(module=0x01, address=0x03, data=cphi, input_type=ctypes.c_float)
 
     # === PRIVATE METHODS ==============================================================================================
     ''' Send Stream to Hardware Manager '''
