@@ -1,3 +1,6 @@
 evdev
 rpi.gpio
 adafruit-blinka
+numpy
+orjson
+cobs
