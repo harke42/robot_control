@@ -95,13 +95,13 @@ class Agent:
         v_r = 0
         
         if dphi == 0 and radius == -1:
-            v_l = 1.0
-            v_r = 1.0
+            v_l = VELOCITY_AT_1
+            v_r = VELOCITY_AT_1
 
         elif dphi == 0 and vtime == -1:
             vtime = radius/206
-            v_l = 1.0
-            v_r = 1.0
+            v_l = VELOCITY_AT_1
+            v_r = VELOCITY_AT_1
 
         elif vtime == -1 and radius != -1:
             v_l, v_r = self._vr_vl_from_radius(radius)
