@@ -107,10 +107,16 @@ def test_agent():
     while True:
         mov_in = input("time dphi radius:\n")
         mov_in = mov_in.split(sep=" ")
-        vtime = float(mov_in[0])
-        dphi = float(mov_in[1])
-        radius = float(mov_in[2])
-        agent.add_movement(vtime=vtime, dphi=dphi, radius=radius)
+        if len(mov_in) == 2:
+            dphi = float(mov_in[0])
+            radius = float(mov_in[1])
+            agent.add_movement(dphi=dphi, radius=radius)
+
+        else:
+            dphi = float(mov_in[0])
+            radius = float(mov_in[1])
+            vtime = float(mov_in[2])
+            agent.add_movement(dphi=dphi, radius=radius, vtime=vtime)
 
 
 if __name__ == '__main__':

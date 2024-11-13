@@ -14,10 +14,12 @@ X = 0
 Y = 1
 
 DIST_BETWEEN_MOTORS = 108 # [mm]
+TIME_SCALOR = 4/3
+RADIUS_SCALOR = 4/5
 
 class Agent:
 
-    movements: list # movement structure: [time, dphi, radius]
+    movements: list # movement structure: [dphi, radius, time]
     goal_position: list
 
     instruction_set: int
@@ -33,7 +35,7 @@ class Agent:
 
     update_thread: threading.Thread
 
-    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=1, robot=None):
+    def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=1):
         self.position = start_pos
         self.goal_position = [0.0, 0.0]
         self.phi = start_dir
@@ -48,23 +50,25 @@ class Agent:
         self.robot.start()
         self.update_thread.start()
 
-    def add_movement(self, vtime=-1, dphi=-1, radius=-1):
+    def add_movement(self, dphi=0, radius=-1, vtime=-1):
         if self.instruction_set != USE_MOVEMENTS:
             print("Tried to add movement while in GOAL mode")
             return
-        self.movements.append([vtime, dphi, radius])
+        self.movements.append([dphi, radius, vtime])
 
     def _movement_task(self):
         while True:
             try:
                 if len(self.movements) > 0:
                     movement = self.movements.pop(0)
-                    self._calculate_movement(vtime=movement[0], dphi=movement[1], radius=movement[2])
+                    if len(movement) == 2:
+                        self._calculate_movement(dphi=movement[0], radius=movement[1])
+                    else:
+                        self._calculate_movement(dphi=movement[0], radius=movement[1], vtime=movement[2])
 
             except Exception as e:
                 print("Error in Movement Task!")
                 print(e)
-                break
 
     #TBD: _goal_task()
 
@@ -72,60 +76,94 @@ class Agent:
         return velocity/VELOCITY_AT_1
 
     def _vr_vl_from_radius(self, radius):
-        ratio_vr_vl = (2*radius + DIST_BETWEEN_MOTORS)/(2*radius - DIST_BETWEEN_MOTORS)
-        v_l = 0
-        v_r = 0
-        if ratio_vr_vl > 0:
-            # case v_r larger than v_l --> left turn
-            v_r = VELOCITY_AT_1
-            v_l = v_r/ratio_vr_vl
+        ratio_vr_vl = (RADIUS_SCALOR*2*radius + DIST_BETWEEN_MOTORS)/(RADIUS_SCALOR*2*radius - DIST_BETWEEN_MOTORS)
+        v_0 = VELOCITY_AT_1
+        v_1 = v_0/ratio_vr_vl
         
-        else:
-            # case v_l larger than v_r --> right turn
-            v_l = VELOCITY_AT_1
-            v_r = ratio_vr_vl * v_l
-            
-        return v_l, v_r
+        return v_1, v_0
 
 
-    def _calculate_movement(self, vtime=-1, dphi=-1, radius=-1):
+    def _calculate_movement(self, dphi=0, radius=-1, vtime=-1):
         """ time in [s], dphi in [rad], radius in [mm] """
 
         v_l = 0
         v_r = 0
         
-        if dphi == 0 and radius == -1:
-            v_l = VELOCITY_AT_1
-            v_r = VELOCITY_AT_1
-
-        elif dphi == 0 and vtime == -1:
-            vtime = radius/206
-            v_l = VELOCITY_AT_1
-            v_r = VELOCITY_AT_1
-
-        elif vtime == -1 and radius != -1:
-            v_l, v_r = self._vr_vl_from_radius(radius)
-            vtime = (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
-        
-        elif dphi == -1 and radius != -1:
-            v_l, v_r = self._vr_vl_from_radius(radius)
-            dphi = (v_r - v_l)*vtime * 1/DIST_BETWEEN_MOTORS
+        if dphi == 0:
+            if radius == 0:
+                # stop
+                pass
+            elif radius > 0:
+                v_l = VELOCITY_AT_1
+                v_r = VELOCITY_AT_1
+                vtime = radius/VELOCITY_AT_1
+            else:
+                raise Exception("Invalid Combination of dphi and radius: dphi = 0 and radius < 0")
             
         else:
-            print("Uncompleted movement command, skipping!")
-            print("Input: time"+str(vtime)+" dphi=" + str(dphi) + " radius=" + str(radius))
-            return
+            if dphi > 0:
+                v_l, v_r = self._vr_vl_from_radius(radius)
+            else:
+                v_r, v_l = self._vr_vl_from_radius(radius)
+            
+            vtime = TIME_SCALOR * (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
+
+        ##if dphi == 0 and radius == -1:
+        ##    v_l = VELOCITY_AT_1
+        ##    v_r = VELOCITY_AT_1
+##
+        ##elif dphi == 0 and vtime == -1:
+        ##    vtime = radius/VELOCITY_AT_1
+        ##    if radius > 0:
+        ##        v_l = VELOCITY_AT_1
+        ##        v_r = VELOCITY_AT_1
+##
+        ##elif vtime == -1 and radius != -1:
+        ##    if dphi > 0:
+        ##        v_l, v_r = self._vr_vl_from_radius(radius)
+        ##        
+        ##    else:
+        ##        v_r, v_l = self._vr_vl_from_radius(radius)
+        ##    
+        ##    vtime = TIME_SCALOR * (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
+        ##
+        ##elif dphi == 0 and radius != -1:
+        ##    v_l, v_r = self._vr_vl_from_radius(radius)
+        ##    dphi = (v_r - v_l)*vtime * 1/DIST_BETWEEN_MOTORS
+            
+        ##else:
+        ##    print("Uncompleted movement command, skipping!")
+        ##    print("Input: time"+str(vtime)+" dphi=" + str(dphi) + " radius=" + str(radius))
+        ##    return
         
         s_l = self._speed_to_motor_input(v_l)
         s_r = self._speed_to_motor_input(v_r)
         self.robot.setSpeed([s_l, s_r])
         time.sleep(vtime)
-        self._update_position(dphi, v_l, v_r)
+        self._update_position(radius, dphi)
+        self.robot.setSpeed([0.0, 0.0])
 
-    def _update_position(self, dphi, v_l, v_r):
-        self.position[X] += 0.5*(v_r + v_l)*(np.sin(self.phi + dphi) - np.sin(self.phi))
-        self.position[X] += 0.5*(v_r + v_l)*(-np.cos(self.phi + dphi) + np.cos(self.phi))
-        self.phi += dphi
+
+    def _update_position(self, dphi, radius):
+        if dphi > 0:
+            phi_M_0 = self.phi - (np.pi/2)
+            phi_M_1 = phi_M_0 + dphi
+        else: 
+            phi_M_0 = self.phi + (np.pi/2)
+            phi_M_1 = phi_M_0 + dphi
+
+        if phi_M_0 > np.pi:
+            phi_M_0 -= 2*np.pi
+        elif phi_M_0 <= -np.pi:
+            phi_M_0 += 2*np.pi
+        if phi_M_1 > np.pi:
+            phi_M_1 -= 2*np.pi
+        elif phi_M_1 <= -np.pi:
+            phi_M_1 += 2*np.pi
+        delta_x = radius * (np.cos(phi_M_1) - np.cos(phi_M_0))
+        delta_y = radius * (np.sin(phi_M_1) - np.sin(phi_M_0))
+        self.position[X] += delta_x
+        self.position[Y] += delta_y
 
 """
 SAMPLE_TIME = 0.01
