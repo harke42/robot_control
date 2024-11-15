@@ -102,6 +102,9 @@ class VisionRobot:
                                                   input_type=ctypes.c_uint8,
                                                   output_type=None)
 
+    def registerExternalWifiCallback(self, identifier, callback, arguments, description):
+        self.communication.wifi.addCommand(identifier=identifier, callback=callback, arguments=arguments, description=description)
+
     def setSpeed(self, speed):
         assert (isinstance(speed, list))
         print(f"Set Speed to {speed}")

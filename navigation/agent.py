@@ -43,6 +43,8 @@ class Agent:
         self.instruction_set = instruction_set
         self.direction = start_dir
         self.robot = vsrob.VisionRobot()
+        self.robot.registerExternalWifiCallback(identifier='add_movement', callback=self.add_movement, 
+                                                arguments=['dphi', 'radius', 'vtime'], description='Add Movement to movement queue of robot')
         if instruction_set == USE_MOVEMENTS:
             self.update_thread = threading.Thread(target=self._movement_task)
 
@@ -141,7 +143,8 @@ class Agent:
         self.robot.setSpeed([s_l, s_r])
         time.sleep(vtime)
         self._update_position(radius, dphi)
-        self.robot.setSpeed([0.0, 0.0])
+        if not len(self.movements) > 0:
+            self.robot.setSpeed([0.0, 0.0])
 
 
     def _update_position(self, dphi, radius):
