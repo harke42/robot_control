@@ -86,7 +86,7 @@ class VisionRobot:
         #self.aruco_detector.start()
         self.board.start()
         self.communication.start()
-        self._thread.start()
+        #self._thread.start()
         print("START VISION ROBOT ...")
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -94,7 +94,6 @@ class VisionRobot:
     '''Debug Function to check UART functionality
         Turns on and off LED Below USB C Port
     '''
-
     def debug(self, state):
         self.communication.serial.executeFunction(module=0x01,
                                                   address=0x01,
@@ -113,6 +112,12 @@ class VisionRobot:
                                                   address=0x02,
                                                   data=input_struct,
                                                   input_type=motor_input_struct)
+
+
+    def send_data(self, descriptor, data):
+        sdata = {}
+        sdata[descriptor] = data
+        self.communication.wifi.sendStream(sdata)
 
 
     # === PRIVATE METHODS ==============================================================================================

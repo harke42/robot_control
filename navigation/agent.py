@@ -34,6 +34,7 @@ class Agent:
     k_v: int        #proportional v coefficient
 
     update_thread: threading.Thread
+    queue_lock: threading.Lock
 
     def __init__(self, start_pos=[0.0,0.0], start_dir=0.0, instruction_set=1):
         self.position = start_pos
@@ -43,8 +44,11 @@ class Agent:
         self.instruction_set = instruction_set
         self.direction = start_dir
         self.robot = vsrob.VisionRobot()
+        self.queue_lock = threading.Lock()
         self.robot.registerExternalWifiCallback(identifier='add_movement', callback=self.add_movement, 
                                                 arguments=['dphi', 'radius', 'vtime'], description='Add Movement to movement queue of robot')
+        self.robot.registerExternalWifiCallback(identifier='add_movements', callback=self.add_movements,
+                                                arguments=['list'], description='Add multiple movements to Queue at once')
         if instruction_set == USE_MOVEMENTS:
             self.update_thread = threading.Thread(target=self._movement_task)
 
@@ -52,17 +56,30 @@ class Agent:
         self.robot.start()
         self.update_thread.start()
 
+    def add_movements(self, list):
+        for element in list:
+            if len(element) == 2:
+                self.add_movement(dphi=element[0], radius=element[1])
+            elif len(element) == 3:
+                self.add_movement(dphi=element[0], radius=element[1], vtime=element[2])
+            else:
+                continue
+
     def add_movement(self, dphi=0, radius=-1, vtime=-1):
         if self.instruction_set != USE_MOVEMENTS:
             print("Tried to add movement while in GOAL mode")
             return
+        self.queue_lock.acquire()
         self.movements.append([dphi, radius, vtime])
+        self.queue_lock.release()
 
     def _movement_task(self):
         while True:
             try:
                 if len(self.movements) > 0:
+                    self.queue_lock.acquire()
                     movement = self.movements.pop(0)
+                    self.queue_lock.release()
                     if len(movement) == 2:
                         self._calculate_movement(dphi=movement[0], radius=movement[1])
                     else:
@@ -71,6 +88,7 @@ class Agent:
             except Exception as e:
                 print("Error in Movement Task!")
                 print(e)
+            time.sleep(1)
 
     #TBD: _goal_task()
 
@@ -85,11 +103,12 @@ class Agent:
         return v_1, v_0
 
 
-    def _calculate_movement(self, dphi=0, radius=-1, vtime=-1):
+    def _calculate_movement(self, dphi=0, radius=-1, vtime=0):
         """ time in [s], dphi in [rad], radius in [mm] """
 
         v_l = 0
         v_r = 0
+        dtime = 0
         
         if dphi == 0:
             if radius == 0:
@@ -98,7 +117,7 @@ class Agent:
             elif radius > 0:
                 v_l = VELOCITY_AT_1
                 v_r = VELOCITY_AT_1
-                vtime = radius/VELOCITY_AT_1
+                dtime = radius/VELOCITY_AT_1
             else:
                 raise Exception("Invalid Combination of dphi and radius: dphi = 0 and radius < 0")
             
@@ -108,7 +127,7 @@ class Agent:
             else:
                 v_r, v_l = self._vr_vl_from_radius(radius)
             
-            vtime = TIME_SCALOR * (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
+            dtime = TIME_SCALOR * (dphi*DIST_BETWEEN_MOTORS)/(v_r - v_l)
 
         ##if dphi == 0 and radius == -1:
         ##    v_l = VELOCITY_AT_1
@@ -141,10 +160,15 @@ class Agent:
         s_l = self._speed_to_motor_input(v_l)
         s_r = self._speed_to_motor_input(v_r)
         self.robot.setSpeed([s_l, s_r])
-        time.sleep(vtime)
+        time.sleep(dtime)
         self._update_position(radius, dphi)
-        if not len(self.movements) > 0:
+
+        if vtime > dtime:
             self.robot.setSpeed([0.0, 0.0])
+            time.sleep(vtime-dtime)
+        else:
+            if not len(self.movements) > 0:
+                self.robot.setSpeed([0.0, 0.0])
 
 
     def _update_position(self, dphi, radius):
@@ -167,115 +191,3 @@ class Agent:
         delta_y = radius * (np.sin(phi_M_1) - np.sin(phi_M_0))
         self.position[X] += delta_x
         self.position[Y] += delta_y
-
-"""
-SAMPLE_TIME = 0.01
-
-class Agent:
-    state: [float, float, float]    #x, y, psi
-    input: [float, float]           #v, psi_dot
-    goal_positions: list[list[float, float]]
-
-    robot: VisionRobot
-    _thread: threading.Thread
-
-    # Controller Constants
-    v_max = 0.25
-    v_min = 0.1
-    psi_dot_max = math.pi
-    radius = 0.01
-
-    # Regler Koeffizienten
-    Kp_psi = 10
-    Kd_psi = 1
-    Ki_psi = 0
-
-    # letzte Fehlerwerte
-    last_error_dist = 0
-    last_error_psi = 0
-
-    def __init__(self, robot):
-        self.state = [0, 0, 0]
-        self.input = [0, 0]
-        self.goal_positions = [[0.0, 0.0]]
-        self.robot = robot
-
-        self._thread = threading.Thread(target=self._threadFunction)
-
-    def start(self):
-        self._thread.start()
-        print("Agent started")
-
-    def setInput(self, input):
-        self.input = input
-
-    def addGoal(self, x, y):
-        self.goal_positions.append([x, y])
-
-    def _control(self):
-        # PD-Control for Psi
-        error_psi = np.arctan2((self.goal_position[1] - self.state[1]), (self.goal_position[0] - self.state[0])) - \
-                    self.state[2]
-        if error_psi > math.pi:
-            error_psi -= 2 * math.pi
-        if error_psi < -math.pi:
-            error_psi += 2 * math.pi
-        print(f"Error Psi: {error_psi}")
-        # Proportional
-        psi_dot_p = self.Kp_psi * error_psi
-        # Integral
-        psi_dot_i = self.Ki_psi * ((error_psi + self.last_error_psi) / SAMPLE_TIME)
-        # Differential
-        psi_dot_d = self.Kd_psi * ((error_psi - self.last_error_psi) / SAMPLE_TIME)
-        self.last_error_psi = error_psi
-        # Stellgröße
-        psi_dot = psi_dot_d + psi_dot_p + psi_dot_i
-
-        error_s = np.sqrt((self.goal_position[0]-self.state[0])**2 + (self.goal_position[1]-self.state[1])**2)
-
-        print(f"Error Distance: {error_s}")
-
-        # Tank turn until error_psi < 5°
-        if np.abs(error_psi) > np.radians(5):
-            v = 0
-        else:
-            v = self.v_max
-            psi_dot = 0
-
-        if error_s < 0.1:
-            v = 0
-
-        self.setInput([v, psi_dot])
-
-    def _threadFunction(self):
-        while True:
-            goal_position = self.goal_positions[0]
-            if np.abs(self.state[0] - goal_position[0]) > 0.01 or np.abs(self.state[1] - goal_position[1]) > 0.01:
-                error_psi = np.arctan2((goal_position[1] - self.state[1]), (goal_position[0] - self.state[0])) - \
-                            self.state[2]
-                self.robot.turn(error_psi)
-                time.sleep(np.abs(error_psi))
-                self.state[2] += error_psi
-                error_s = np.sqrt((goal_position[0] - self.state[0]) ** 2 + (goal_position[1] - self.state[1]) ** 2)
-                self.robot.setSpeed([0.5, 0.5])
-                time.sleep(np.abs(error_s))
-                self.state[0] = goal_position[0]
-                self.state[1] = goal_position[1]
-                self.robot.setSpeed([0, 0])
-                print(f"Robot at {self.state[0]}|{self.state[1]}")
-            elif len(self.goal_positions) > 1:
-                self.goal_positions.pop(0)
-            time.sleep(0.1)
-
-
-if __name__ == '__main__':
-    from utils.stm32.stm32_flash.reset import reset as stm32_reset
-    from robot.VisionRobot.VisionRobot import VisionRobot
-
-    stm32_reset(0.25)
-    robot = VisionRobot()
-    robot.init()
-    robot.start()
-    agent = Agent(robot)
-    agent.start()
-"""

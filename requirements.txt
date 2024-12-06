@@ -4,3 +4,7 @@ adafruit-blinka
 numpy
 orjson
 cobs
+PyYAML
+opencv-contrib-python
+flask
+picamera2==0.3.12

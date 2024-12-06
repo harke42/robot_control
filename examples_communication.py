@@ -14,12 +14,14 @@
 #         twipr.communication.serial.debug(state)
 #         state = not state
 #         time.sleep(0.25)
+import numpy as np
 import time
 
 from extensions.joystick import rpi_joystick
 from utils.stm32.stm32_flash.reset import reset as stm32_reset
 import robot.visionrobot as vsrob
 import navigation.agent as nav
+import aruco_detection.aruco_detector as arc
 
 
 def test_comm():
@@ -102,8 +104,19 @@ def test_receive():
 
 def test_agent():
     stm32_reset(0.25)
+    aruco_detector = arc.ArucoDetector(streaming=True)
+    aruco_detector.start()
+
     agent = nav.Agent()
     agent.start()
+    while True:
+        data = [[],[],[]]
+        data[0], data[1], data[2] = aruco_detector.measurement()
+        data[0] = np.ndarray.tolist(data[0])
+        data[1] = np.ndarray.tolist(data[1])
+        data[2] = np.ndarray.tolist(data[2])
+        agent.robot.send_data('msr', data)
+        time.sleep(5)
     #while True:
     #    mov_in = input("time dphi radius:\n")
     #    mov_in = mov_in.split(sep=" ")
