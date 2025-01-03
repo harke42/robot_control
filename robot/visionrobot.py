@@ -54,7 +54,7 @@ class VisionRobot:
     _thread: threading.Thread
     data: CommunicationData
 
-    def __init__(self, camera_version="v3", image_server_ip="localhost"):
+    def __init__(self):
         #self.aruco_detector = arcd.ArucoDetector(version=camera_version,
         #                                         stream_if=image_server_ip)
 
