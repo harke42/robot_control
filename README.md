@@ -26,7 +26,7 @@ Setup a Raspi/Compute-Module-Robot
 
 - Make sure you can ping/ssh on to your robot
 
-- Keep going with Option [a)](#installation-with-install-scripts-linux) if you are on Linux or skip to Option [b](#installation-with-install-scripts-windows) for Windows, or with option [c)](#installation-by-hand) if you want to do everything by hand and understand, what is going on
+- Keep going with Option [a)](#installation-with-install-scripts-linux) if you are on Linux or skip to Option [b)](#installation-with-install-scripts-windows) for Windows, or with option [c)](#installation-by-hand) if you want to do everything by hand and understand, what is going on
 
 ### Installation with install scripts [Linux]
 
