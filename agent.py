@@ -1,3 +1,6 @@
+import time
+from utils.stm32.stm32_flash.reset import reset as stm32_reset
+
 import navigation.navigation as nav
 import robot.visionrobot as visrob
 import aruco_detection.aruco_detector as arc
@@ -9,6 +12,7 @@ class Agent:
     aruco_detector: arc.ArucoDetector
 
     def __init__(self):
+        stm32_reset(0.25)   # necessary for uart to work
         self.robot = visrob.VisionRobot()
         
         self.navigation = nav.Navigation(set_speed_func=self.robot.setSpeed)
@@ -24,3 +28,9 @@ class Agent:
         self.robot.start()
         self.navigation.start()
         self.aruco_detector.start()
+
+if __name__ == "__main__":
+    agent = Agent()
+    agent.start()
+    while True:
+        time.sleep(1)

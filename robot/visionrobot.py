@@ -1,7 +1,6 @@
 import ctypes
 import threading
 import time
-#import robot.VisionRobot.aruco_detection.aruco_detector as arcd
 
 from board.board import RobotControl_Board
 from robot.communication.twipr_communication import TWIPR_Communication
@@ -48,15 +47,12 @@ class CommunicationData(ctypes.Structure):
 
 
 class VisionRobot:
-    #aruco_detector: arcd.ArucoDetector
     board: RobotControl_Board
     communication: TWIPR_Communication
     _thread: threading.Thread
     data: CommunicationData
 
     def __init__(self):
-        #self.aruco_detector = arcd.ArucoDetector(version=camera_version,
-        #                                         stream_if=image_server_ip)
 
         self.board = RobotControl_Board(device_class='robot',
                                         device_type='visionrobot',
