@@ -26,7 +26,7 @@ Setup a Raspi/Compute-Module-Robot
 
 - Make sure you can ping/ssh on to your robot
 
-- Keep going with Option [a)](#installation-with-install-scripts-[linux]) if you are on Linux or skip to Option [b)](#installation-with-install-scripts-[windows]) for Windows, or with option [c)]() if you want to do everything by hand and understand, what is going on
+- Keep going with Option [a)](#installation-with-install-scripts-linux) if you are on Linux or skip to Option [b](#installation-with-install-scripts-windows) for Windows, or with option [c)](#installation-by-hand) if you want to do everything by hand and understand, what is going on
 
 ### Installation with install scripts [Linux]
 
@@ -44,7 +44,7 @@ Setup a Raspi/Compute-Module-Robot
   
   2. to run the actual install script on the raspi itself
 
-. go to [verification](#verification-of-installation)
+- go to [verification](#verification-of-installation)
 
 ### Installation with install scripts [Windows]
 
@@ -56,7 +56,7 @@ Setup a Raspi/Compute-Module-Robot
   ./install_robot_control.sh
   ```
 
-- go to [last step](#verification-of-installation)
+- go to [verification](#verification-of-installation)
 
 ### Installation by hand
 
