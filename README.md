@@ -11,6 +11,10 @@ Features included are navigation planning, a camera integration of a Picamera to
 1. [Quick Start](#quick-start)
 
 2. [Module Overview](#module-overview)
+   
+   1. [Aruco Detection](#aruco-detection)
+   
+   2. [Navigation](navigation)
 
 ## <u>Quick Start</u>
 
@@ -136,8 +140,6 @@ Setup a Raspi/Compute-Module-Robot
 
 - ...
 
-
-
 ## <u>Module Overview</u>
 
 ### Aruco Detection
@@ -187,10 +189,10 @@ It is independent of the rest of the robot, so it will also work with a regular 
      - for debug purposes, the distance from camera to aruco marker derived from the translation vector is printed to stderr as simple quality control
   
   2- manually:
-     
-     - camera frames are only captured when ArucoDetector *measurement* function is called & analyzed for aruco markers
-     
-     - *measurement* function returns list of found marker IDs, list of found translation vectors and list of found rotation vectors
+  
+  - camera frames are only captured when ArucoDetector *measurement* function is called & analyzed for aruco markers
+  
+  - *measurement* function returns list of found marker IDs, list of found translation vectors and list of found rotation vectors
   
   :information_source: Rotation Vectors by cv2 are in "Rodrigues" format, meaning that their norm/lengh equals the rotation angle in radiants and the vector itself is the rotation axis (can be directly converted to quaternions with qmt) :information_source:
 
@@ -231,7 +233,3 @@ With that, we can describe a lot of motions. Let's have a look at what else is p
 - stop: dphi = 0; r = 0mm;
 
 - turn at place: r = 0mm; example: dphi = $\pi$, r = 0mm
-
-
-
-
