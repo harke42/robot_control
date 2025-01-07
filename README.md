@@ -212,13 +212,13 @@ Lets get some examples, excluding the time parameter for the beginning:
 
 Example 1: left turn
 
-![Navigation left turn](https://github.com/harke42/robot_control/tree/main/.images/navigation_left_turn.png?raw=true)
+![Navigation left turn](.images/navigation_left_turn.png)
 
 Here we have a left turn. We could describe it with dphi = $\frac{3}{4}\pi$ and e.g. radius r = 300mm. We define a left turn to have a positive dphi, derived from math. positive direction.
 
 Example 2: right turn
 
-![Navigation Right Turn](https://github.com/harke42/robot_control/tree/main/.images/navigation_right_turn.png?raw=true)
+![Navigation Right Turn](.images/navigation_right_turn.png)
 
 Here we have a right turn. Anticipating, that both radii are the same, we could describe it with dphi = $\frac{\pi}{2}$ and e.g. radius r = 300mm.
 
