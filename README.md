@@ -212,13 +212,13 @@ Lets get some examples, excluding the time parameter for the beginning:
 
 Example 1: left turn
 
-![](/home/harke/.var/app/com.github.marktext.marktext/config/marktext/images/2025-01-07-10-00-27-navigation_left_turn.png)
+![Navigation left turn](https://github.com/harke42/robot_control/tree/main/.images/navigation_left_turn.png)
 
 Here we have a left turn. We could describe it with dphi = $\frac{3}{4}\pi$ and e.g. radius r = 300mm. We define a left turn to have a positive dphi, derived from math. positive direction.
 
 Example 2: right turn
 
-![](/home/harke/.var/app/com.github.marktext.marktext/config/marktext/images/2025-01-07-10-08-46-navigation_right_turn.png)
+![Navigation Right Turn](https://github.com/harke42/robot_control/tree/main/.images/navigation_right_turn.png)
 
 Here we have a right turn. Anticipating, that both radii are the same, we could describe it with dphi = $\frac{\pi}{2}$ and e.g. radius r = 300mm.
 
