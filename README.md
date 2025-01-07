@@ -220,13 +220,13 @@ Example 2: right turn
 
 ![Navigation Right Turn](.images/navigation_right_turn.png)
 
-Here we have a right turn. Anticipating, that both radii are the same, we could describe it with dphi = $\frac{\pi}{2}$ and e.g. radius r = 300mm.
+Here we have a right turn. Anticipating, that both radii are the same, we could describe it with dphi = -$\frac{1}{2}\pi$ and e.g. radius r = 300mm.
 
 With that, we can describe a lot of motions. Let's have a look at what else is possible:
 
 - left turn: dphi > 0; example: dphi = $\frac{3}{4}\pi$, r = 300mm
 
-- right turn: dphi < 0; example: dphi = $\frac{\pi}{2}$, r = 300mm
+- right turn: dphi < 0; example: dphi = -$\frac{1}{2}\pi$, r = 300mm
 
 - straight movement: dphi = 0; example: dphi = 0, r = 300mm
 
