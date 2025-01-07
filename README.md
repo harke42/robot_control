@@ -14,7 +14,7 @@ Features included are navigation planning, a camera integration of a Picamera to
    
    1. [Aruco Detection](#aruco-detection)
    
-   2. [Navigation](navigation)
+   2. [Navigation](#navigation)
 
 ## <u>Quick Start</u>
 
